@@ -36,22 +36,26 @@ fi
 done
 }
 # Виводимо опис того що ставимо
-echo "$(cat DESCRIPTION)"
-# питаємо чи це ствимо
-confirm
-if  [ $? == 1 ]; then
-# якщо не це то зупиняємось
-exit 1
+if [ -e "DESCRIPTION" ]; then
+    echo "$(cat DESCRIPTION)"
+    # питаємо чи це ствимо
+    confirm
+    if  [ $? == 1 ]; then
+    # якщо не це то зупиняємось
+    exit 1
+    fi
 fi
 
 # Тепер оглошуємо ліцензію
-echo "$(cat LICENSE)"
-# питаємо згоди
-confirm
+if [ -e "DESCRIPTION" ]; then
+    echo "$(cat LICENSE)"
+    # питаємо згоди
+    confirm
 
-if  [ $? == 1 ]; then
-# якщо не це то зупиняємось
-exit 1
+    if  [ $? == 1 ]; then
+    # якщо не це то зупиняємось
+    exit 1
+    fi
 fi
 
 # Перевіряємо існування того що заміщаємо
