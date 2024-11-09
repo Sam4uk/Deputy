@@ -36,7 +36,7 @@ fi
 done
 }
 # Виводимо опис того що ставимо
-echo -e "$(cat DESCRIPTION)"
+echo "$(cat DESCRIPTION)"
 # питаємо чи це ствимо
 confirm
 if  [ $? == 1 ]; then
@@ -45,7 +45,7 @@ exit 1
 fi
 
 # Тепер оглошуємо ліцензію
-echo -e "$(cat LICENSE)"
+echo "$(cat LICENSE)"
 # питаємо згоди
 confirm
 
