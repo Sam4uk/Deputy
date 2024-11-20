@@ -58,6 +58,8 @@ if [ -e "DESCRIPTION" ]; then
     fi
 fi
 
+NewExt=$(date "+%d-%m-%y(%T)").bak
+
 # Перевіряємо існування того що заміщаємо
 echo -e "Check existing \e[34m${2}\e[0m ..."
 #     # Перевіряю існування шляху
@@ -76,7 +78,7 @@ echo -e "Check existing \e[34m${2}\e[0m ..."
                 echo -e "\e[32mSymlink OK\e[0m"
             else
                 # не наша тека
-                mv ${2} ${2}.$(date +%d-%m-%y)
+                mv ${2} "${2}.$NewExt"
                 ln -s ${1} ${2}
                 echo -e "\e[32mSymlink OK\e[0m"
             fi
@@ -87,14 +89,15 @@ echo -e "Check existing \e[34m${2}\e[0m ..."
             if [ -d ${2} ]; then
                 # каталог
                 echo -e "${2} is a folder"
-                mv ${2} ${2}.$(date +%d-%m-%y)
+                mv ${2} "${2}.$NewExt"
                 ln -s ${1} ${2}
                 echo -e "\e[32mSymlink OK\e[0m"
             else
                 # Виявляється це файл
                 echo -e "\e[34m${2}\e[0m is a file"
                 # Перейменовуємо
-                mv ${2} ${2}.$(date +%d-%m-%y)
+                mv ${2} "${2}.$NewExt"
+                # $(date "+%d-%m-%y(%T)").bak
                 ln -s ${1} ${2}
                 echo -e "\e[32mSymlink OK\e[0m"
             fi
