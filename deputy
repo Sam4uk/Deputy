@@ -1,62 +1,77 @@
 #! /bin/bash
 
+MES=" Перевіряю існування джерела"
+MES_1_CORRECT=" Шлях ${1} правильний"
+MES_2_FAIL=" Шкода але забули вказати другий параметр \\n Я не можу продовжити роботу"
+
 # Запуск без параметрів
-if [[ "${1}" == "" ]];then
-    echo " Run script"
+if [ "${1}" == "" ];then
+    echo " Запуск скрипту"
     echo "          ${0} <source_path> <target_path>"
     exit
-fi
+else # перший параметр коректний
+    echo $MES
+    if [ -e ${1} ]; then
+        echo -e $MES_1_CORRECT
+        # Забули один параметр
+        if [[ "${2}" == "" ]];then
+            echo -e $MES_2_FAIL
+            exit
+        else
+            echo " Перевірки параметрів завершено"
+            echo " Починаю роботу"
+            if [ -e "${2}" ]; then
+                echo " Я знайшов шлях ${2}"
+                echo " Перевіряю"
+                NewExt=$(date "+%d-%m-%y(%T)").bak
+                if [ -L "${2}" ]; then
+                    echo " Це символьне посилання"
+                    echo " Читаю ${2} посилання => $(readlink ${2})"
+                    if [ $(readlink "${2}") = "${1}" ];then
+                        echo -e " \e[32mСимвольне посилання вказує на нас\e[0m"
+                        echo " Робота виконана успішно"
+                        exit
+                    else
+                        echo " Це посилання чуже"
+                        echo " Архівую до ${2}.$NewExt"
+                        mv "${2}" "${2}.$NewExt"
+                        echo " Створюю"
+                        ln -s "${1}" "${2}"
+                        echo " Робота виконана успішно"
+                    fi # заміна символьного посилання проведена
+                else # це не символьне постлання
+                    if [ -d "${2}" ]; then
+                        echo " ${2} є каталогом"
+                        echo " Архівую до ${2}.$NewExt"
+                        mv "${2}" "${2}.$NewExt" #zip
+                        echo " Створюю"
+                        ln -s "${1}" "${2}"
+                        echo " Робота виконана успішно"
+                    else   
+                        echo " ${2} є файлом"
+                        echo " Архівую до ${2}.$NewExt"
+                        mv "${2}" "${2}.$NewExt" #zip
+                        echo " Створюю"
+                        ln -s "${1}" "${2}"
+                        echo " Робота виконана успішно"
+                    fi
+                fi
+            else
+                echo " Я шлях ${2} не існує" 
+                echo " Створюю"
+                ln -s "${1}" "${2}"
+                echo " Робота виконана успішно" 
+            fi
+        fi        
+    else # Шлях задано не правильно
+        echo " Шкода але ${1} не існує. Перевірте правильність параметрів"
+    fi  # Закінчив всі перевірки
+    echo " Роботу завершено"
+fi # кінець алгоритму
 
-# перевіряємо перший параметр чи то файл
-if [ -e ${1} ]; then
-    # Забули один параметр
-    if [[ "${2}" == "" ]];then
-    echo "Taget not set"
-    exit
-    fi
-else
-
-    echo "Path ${1} no exist"
-    exit
-fi
+exit
 
 
-# Функція яка просить підтвердження на продовження
-# сценарію. Вона ВИМАГАЄ ввести руцями YES або NO
-confirm(){
-while ((1))
-do
-echo "type YES or NO"
-read answ
-if [[ "$answ" == "YES" ]]; then
- return 0
-elif [[ "$answ" == "NO" ]]; then
- return 1
-fi
-done
-}
-# Виводимо опис того що ставимо
-if [ -e "DESCRIPTION" ]; then
-    echo "$(cat DESCRIPTION)"
-    # питаємо чи це ствимо
-    confirm
-    if  [ $? == 1 ]; then
-    # якщо не це то зупиняємось
-    exit 1
-    fi
-fi
-
-# Тепер оглошуємо ліцензію
-if [ -e "DESCRIPTION" ]; then
-    echo "$(cat LICENSE)"
-    # питаємо згоди
-    confirm
-
-    if  [ $? == 1 ]; then
-    # якщо не це то зупиняємось
-    exit 1
-    fi
-fi
 
 NewExt=$(date "+%d-%m-%y(%T)").bak
 
