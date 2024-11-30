@@ -1,129 +1,97 @@
 #! /bin/bash
+# author: sam4uk
+# version 0.2
+# date: 1-12-24
 
-MES=" Перевіряю існування джерела"
-MES_1_CORRECT=" Шлях ${1} правильний"
-MES_2_FAIL=" Шкода але забули вказати другий параметр \\n Я не можу продовжити роботу"
+# Рядки для локалізації
+MES_BEGIN="\\t Запуск скрипту"
+MES_NO_PARAM="\\t Скрипт запущено без параметрів\\n"
+MES_CHECK_PATH="\\t \e[32mПеревіряю існування джерела\e[0m"
+MES_1_CORRECT="\\t Шлях \e[34m${1}\e[0m правильний"
+MES_2_FAIL="\\t Шкода але забули вказати \e[31mдругий параметр\e[0m \\n\\t Я \e[31mне можу продовжити роботу\e[0m"
+MES_CHECK_FIN="\\t Перевірки параметрів завершено"
+MES_START="\\t Починаю заміну"
+MES_FOUND="\\t Я знайшов шлях \e[34m${2}\e[0m "
+MES_CHECK="\\t \e[32mПеревіряю\e[0m"
+MES_IS_FOLDER="\\t \e[34m${2}\e[0m є каталогом"
+MES_IS_FILE="\\t \e[34m${2}\e[0m є файлом"
+MES_IS_LINK="\\t \e[34m${2}\e[0m це символьне посилання"
+MES_NO_EXIST="\\t шлях \e[34m${2}\e[0m не існує" 
+MES_BAK_UP="\\t Архівую до"
+MES_DO_MAKE="\\t Створюю посилання на \e[34m${1}\e[0m"
+MES_JOB_OK="\\t Робота виконана успішно"
+MES_READ_LINK="\\t Читаю \e[34m${2}\e[0m посилання =>"
+MES_LINK_TO_ME="\\t \e[32mСимвольне посилання вказує на нас\e[0m"
+MES_LINK_NOT_ME="\\t Це посилання \e[31mчуже\e[0m"
+MES_JOK_FIN="\\t Роботу завершено"
+MES_SORY="\\t Шкода але \e[32m${1}\e[0m \e[31mне існує\e[0m. Перевірте правильність параметрів"
+# Рядки налаштування
+ZIP_PARAM="-m9ry"
 
-# Запуск без параметрів
-if [ "${1}" == "" ];then
-    echo " Запуск скрипту"
-    echo "          ${0} <source_path> <target_path>"
+if [[ -z "${1}" ]];then # перевіряємо на наявність парамтрів, якщо без парамтерів то виводимо довідку
+    echo -e $MES_NO_PARAM
+    echo -e "\\t \\t deputy <source_path> <target_path>\\n"
+    # echo -e "запуск без параметрів"
+    # echo -e "запуск без параметрів"
     exit
-else # перший параметр коректний
-    echo $MES
-    if [ -e ${1} ]; then
+elif [[ -n "${1}" ]];then # присутній перший параметр
+    echo -e $MES_BEGIN
+    echo -e $MES_CHECK_PATH
+    if [ -e "${1}" ]; then # перевіряємо чи параметр є дісним шляхом
         echo -e $MES_1_CORRECT
-        # Забули один параметр
-        if [[ "${2}" == "" ]];then
+        if [[ -z "${2}" ]]; then #перевіряємо другий парамтер
             echo -e $MES_2_FAIL
-            exit
-        else
-            echo " Перевірки параметрів завершено"
-            echo " Починаю роботу"
-            if [ -e "${2}" ]; then
-                echo " Я знайшов шлях ${2}"
-                echo " Перевіряю"
-                NewExt=$(date "+%d-%m-%y(%T)").bak
-                if [ -L "${2}" ]; then
-                    echo " Це символьне посилання"
-                    echo " Читаю ${2} посилання => $(readlink ${2})"
-                    if [ $(readlink "${2}") = "${1}" ];then
-                        echo -e " \e[32mСимвольне посилання вказує на нас\e[0m"
-                        echo " Робота виконана успішно"
-                        exit
-                    else
-                        echo " Це посилання чуже"
-                        echo " Архівую до ${2}.$NewExt"
+            exit # другий парамтр відсутній закінчуємо
+        else # другий параметр присутній
+            echo -e $MES_CHECK_FIN
+            echo -e $MES_START
+            if [ -e "${2}" ]; then # Це дійсний шлях
+                echo -e $MES_FOUND
+                echo -e $MES_CHECK
+                NewExt=$(date "+%d-%m-%y(%T)").bak.zip
+                if [ -h "${2}" ]; then # Може це постлання
+                    echo -e $MES_IS_LINK
+                    if [ $(readlink "${2}") = "${1}" ];then # посилання на нас самих?
+                        echo -e $MES_READ_LINK "\e[34m$(readlink ${2})\e[0m"
+                        echo -e $MES_LINK_TO_ME
+                        echo -e $MES_JOB_OK
+                        exit 
+                    else # посилання на когось іншого
+                        echo -e $MES_READ_LINK "\e[31m$(readlink ${2})\e[0m"
+                        echo -e $MES_LINK_NOT_ME
+                        echo -e "$MES_BAK_UP \e[34m${2}.$NewExt\e[0m"
                         mv "${2}" "${2}.$NewExt"
-                        echo " Створюю"
+                        echo -e $MES_DO_MAKE
                         ln -s "${1}" "${2}"
-                        echo " Робота виконана успішно"
-                    fi # заміна символьного посилання проведена
-                else # це не символьне постлання
-                    if [ -d "${2}" ]; then
-                        echo " ${2} є каталогом"
-                        echo " Архівую до ${2}.$NewExt"
-                        mv "${2}" "${2}.$NewExt" #zip
-                        echo " Створюю"
+                        echo -e $MES_JOB_OK
+                    fi # тест посилання проведено
+                elif [ -d "${2}" ]; then # Може це каталог
+                        echo -e $MES_IS_FOLDER
+                        echo -e "$MES_BAK_UP \e[34m${2}.$NewExt\e[0m\e[33m"
+                        zip $ZIP_PARAM "${2}.$NewExt" "${2}"
+                        echo -e  "\e[0m$MES_DO_MAKE"
                         ln -s "${1}" "${2}"
-                        echo " Робота виконана успішно"
-                    else   
-                        echo " ${2} є файлом"
-                        echo " Архівую до ${2}.$NewExt"
-                        mv "${2}" "${2}.$NewExt" #zip
-                        echo " Створюю"
+                        echo -e $MES_JOB_OK
+                elif [ -f "${2}" ]; then # може звичайний файл
+                        echo -e $MES_IS_FILE
+                        echo -e "$MES_BAK_UP \e[34m${2}.$NewExt\e[0m\e[33m"
+                        zip -$ZIP_PARAM "${2}.$NewExt" "${2}"
+                        echo -e "\e[0m$MES_DO_MAKE"
                         ln -s "${1}" "${2}"
-                        echo " Робота виконана успішно"
-                    fi
-                fi
-            else
-                echo " Я шлях ${2} не існує" 
-                echo " Створюю"
+                        echo -e $MES_JOB_OK
+                fi # закінчена перевірка існуючого файлу
+            else # шляху не існує
+                echo -e $MES_NO_EXIST
+                echo -e $MES_DO_MAKE
                 ln -s "${1}" "${2}"
-                echo " Робота виконана успішно" 
-            fi
-        fi        
-    else # Шлях задано не правильно
-        echo " Шкода але ${1} не існує. Перевірте правильність параметрів"
+                echo -e $MES_JOB_OK
+            fi #перевірку шляху завершено
+        fi # перевірку другого парамтеру завершено
+    else # Другий параметр не задано
+        echo -e $MES_SORY
+        exit # на вихід
     fi  # Закінчив всі перевірки
-    echo " Роботу завершено"
+    echo -e $MES_JOK_FIN
+    exit
 fi # кінець алгоритму
-
 exit
-
-
-
-NewExt=$(date "+%d-%m-%y(%T)").bak
-
-# Перевіряємо існування того що заміщаємо
-echo -e "Check existing \e[34m${2}\e[0m ..."
-#     # Перевіряю існування шляху
-    if [ -e "${2}" ]; then
-        # якщо шлях існує
-        echo -e "Path found"
-        echo -e "Path \e[34m${2}\e[0m \e[32mexist\e[0m"
-        # перевіряємо чи це не сімволічне посилання
-        if [ -L "${2}" ]; then
-            # це сімлінк
-            echo -e "${2} is a symlink"
-            # Перевіряю символьне посилання
-            echo -e "Read symlink"
-            echo -e "\e[34m${2}\e[0m => $(readlink ${2})"
-            if [ $(readlink "${2}") = "${1}" ];then
-                echo -e "\e[32mSymlink OK\e[0m"
-            else
-                # не наша тека
-                mv "${2}" "${2}.$NewExt"
-                ln -s "${1}" "${2}"
-                echo -e "\e[32mSymlink OK\e[0m"
-            fi
-        else
-            # це не посилання
-            echo -e "Try open like folder"
-            # перевіряємо чи не каталог
-            if [ -d "${2}" ]; then
-                # каталог
-                echo -e "${2} is a folder"
-                mv "${2}" "${2}.$NewExt"
-                ln -s "${1}" "${2}"
-                echo -e "\e[32mSymlink OK\e[0m"
-            else
-                # Виявляється це файл
-                echo -e "\e[34m${2}\e[0m is a file"
-                # Перейменовуємо
-                mv "${2}" "${2}.$NewExt"
-                # $(date "+%d-%m-%y(%T)").bak
-                ln -s "${1}" "${2}"
-                echo -e "\e[32mSymlink OK\e[0m"
-            fi
-        fi
-    else
-        # Шлях не зеайдено його треба створити
-        echo -e "Path ${2} \e[31mno exists\e[0m"
-        # Шлях стврлємо
-        ln -s "${1}" "${2}"
-        # Шлях створено
-        echo -e "\e[32mCreate\e[0m"
-        # Успішно
-        echo -e "\e[32mSymlink OK\e[0m"
-    fi
