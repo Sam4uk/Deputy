@@ -75,7 +75,7 @@ elif [[ -n "${1}" ]];then # присутній перший параметр
                 elif [ -f "${2}" ]; then # може звичайний файл
                         echo -e $MES_IS_FILE
                         echo -e "$MES_BAK_UP \e[34m${2}.$NewExt\e[0m\e[33m"
-                        zip -$ZIP_PARAM "${2}.$NewExt" "${2}"
+                        zip $ZIP_PARAM "${2}.$NewExt" "${2}"
                         echo -e "\e[0m$MES_DO_MAKE"
                         ln -s "${1}" "${2}"
                         echo -e $MES_JOB_OK
